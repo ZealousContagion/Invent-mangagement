@@ -8,6 +8,8 @@ export interface Stats {
   recentMovements: number;
   totalValue: number;
   categoryData: { name: string; value: number }[];
+  monthlyData: { month: string; revenue: number; expenses: number }[];
+  topProducts: { name: string; quantity: number }[];
 }
 
 export const useStats = () => {

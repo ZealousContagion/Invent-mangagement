@@ -8,6 +8,15 @@ export declare class StatsService {
         lowStockProducts: number;
         recentMovements: number;
         totalValue: number;
-        categoryData: any;
+        categoryData: {
+            name: string;
+            value: number;
+        }[];
+        monthlyData: {
+            month: string;
+            revenue: number;
+            expenses: number;
+        }[];
+        topProducts: any[];
     }>;
 }
