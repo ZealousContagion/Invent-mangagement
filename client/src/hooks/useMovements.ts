@@ -3,17 +3,19 @@ import api from '@/lib/api';
 
 export interface StockMovement {
   id: string;
-  type: "IN" | "OUT" | "ADJUSTMENT" | "CHECK_IN" | "CHECK_OUT";
-  quantity: number;
-  reason: string;
-  createdAt: string;
+  productId: string;
   product: {
     name: string;
     sku: string;
   };
+  quantity: number;
+  type: 'IN' | 'OUT' | 'ADJUSTMENT';
+  reason?: string;
+  employeeId?: string;
   employee?: {
     name: string;
   };
+  createdAt: string;
 }
 
 export const useMovements = () => {

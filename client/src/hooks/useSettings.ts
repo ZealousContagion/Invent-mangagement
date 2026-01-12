@@ -16,7 +16,7 @@ export const useSettings = () => {
   });
 };
 
-export const useUpdateSettings = () => {
+export const useUpdateManySettings = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (settings: Setting[]) => {
@@ -25,6 +25,7 @@ export const useUpdateSettings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };

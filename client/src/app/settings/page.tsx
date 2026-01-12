@@ -1,151 +1,158 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Building, AlertTriangle } from "lucide-react";
-import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
+import {
+  Settings,
+  Save,
+  Bell,
+  Shield,
+  Globe,
+  Zap,
+  RefreshCcw,
+  CheckCircle2
+} from "lucide-react";
+import { useSettings, useUpdateManySettings } from "@/hooks/useSettings";
 
 export default function SettingsPage() {
-  const { data: rawSettings = [], isLoading: loading } = useSettings();
-  const updateSettings = useUpdateSettings();
-  
-  const [settingsMap, setSettingsMap] = useState<Record<string, string>>({});
+  const { data: remoteSettings, isLoading } = useSettings();
+  const updateSettings = useUpdateManySettings();
+  const [localSettings, setLocalSettings] = useState<Record<string, string>>({});
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    if (rawSettings.length > 0) {
-      const map: Record<string, string> = {};
-      rawSettings.forEach((s) => {
-        map[s.key] = s.value;
-      });
-      setSettingsMap(map);
+    if (remoteSettings) {
+      const mapped = remoteSettings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {});
+      setLocalSettings(mapped);
     }
-  }, [rawSettings]);
+  }, [remoteSettings]);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
+    const settingsArray = Object.entries(localSettings).map(([key, value]) => ({ key, value }));
     try {
-      const settingsArray = Object.entries(settingsMap).map(([key, value]) => ({ key, value }));
       await updateSettings.mutateAsync(settingsArray);
-      alert("Settings saved successfully.");
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
     } catch (error) {
-      console.error("Error saving settings:", error);
-      alert("Failed to save settings.");
+      console.error("Failed to save settings:", error);
     }
   };
 
-  const handleChange = (key: string, value: string) => {
-    setSettingsMap(prev => ({ ...prev, [key]: value }));
-  };
-
-  if (loading) return <div className="p-8 text-center text-slate-400">Loading configuration...</div>;
-
-  const saving = updateSettings.isPending;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">System Settings</h2>
-        <p className="text-sm text-slate-500 mt-1">Configure global application parameters.</p>
+    <div className="max-w-4xl mx-auto pb-20">
+      <div className="flex items-center justify-between mb-12">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">System Configuration</h2>
+          <p className="text-sm text-slate-500 mt-1 font-medium italic">Fine-tune the inventory engine to match your operational rhythms.</p>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={updateSettings.isPending}
+          className="flex items-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:shadow-2xl hover:shadow-slate-900/20 active:scale-95 transition-all disabled:opacity-50"
+        >
+          {updateSettings.isPending ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {isSaved ? "Settings Saved" : "Save Changes"}
+        </button>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-8">
-        
-        {/* Company Settings */}
-        <section className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-50 flex items-center space-x-3">
-            <div className="bg-slate-50 p-2 rounded-lg">
-              <Building className="w-5 h-5 text-slate-500" />
+      <div className="space-y-8">
+        {/* Inventory Section */}
+        <section className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-amber-50 rounded-2xl">
+              <Bell className="w-6 h-6 text-amber-500" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900">Company Profile</h3>
-              <p className="text-xs text-slate-400">Used for reports and documents.</p>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Inventory Thresholds</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Stock Alert Parameters</p>
             </div>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Company Name</label>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Low Stock Threshold</label>
+              <input
+                type="number"
+                value={localSettings.lowStockThreshold || "10"}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, lowStockThreshold: e.target.value }))}
+                className="w-full px-6 py-4 bg-slate-50/50 border-none rounded-2xl text-lg font-black focus:outline-none focus:ring-4 focus:ring-slate-900/5 transition-all"
+              />
+              <p className="text-[10px] text-slate-400 font-medium ml-1">Items below this quantity will trigger red alert badges across the system.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Company Profile Section */}
+        <section className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-blue-50 rounded-2xl">
+              <Shield className="w-6 h-6 text-blue-500" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">System Identity</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Instance Branding</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Company Name</label>
               <input
                 type="text"
-                value={settingsMap["companyName"] || ""}
-                onChange={(e) => handleChange("companyName", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm"
-                placeholder="My Company Inc."
+                value={localSettings.companyName || "Inventory Pro"}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, companyName: e.target.value }))}
+                className="w-full px-6 py-4 bg-slate-50/50 border-none rounded-2xl text-lg font-black focus:outline-none focus:ring-4 focus:ring-slate-900/5 transition-all"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Support Email</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Instance URL</label>
               <input
-                type="email"
-                value={settingsMap["supportEmail"] || ""}
-                onChange={(e) => handleChange("supportEmail", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm"
-                placeholder="support@example.com"
-              />
-            </div>
-            <div className="col-span-full space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Address</label>
-              <textarea
-                value={settingsMap["address"] || ""}
-                onChange={(e) => handleChange("address", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm h-24 resize-none"
-                placeholder="123 Business St, Tech City..."
+                type="text"
+                value={localSettings.instanceUrl || "http://localhost:3000"}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, instanceUrl: e.target.value }))}
+                className="w-full px-6 py-4 bg-slate-50/50 border-none rounded-2xl text-lg font-black focus:outline-none focus:ring-4 focus:ring-slate-900/5 transition-all"
               />
             </div>
           </div>
         </section>
 
-        {/* Inventory Settings */}
-        <section className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-50 flex items-center space-x-3">
-            <div className="bg-slate-50 p-2 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-slate-500" />
+        {/* Automation Section */}
+        <section className="bg-slate-900 p-10 rounded-[40px] text-white">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-white/10 rounded-2xl">
+              <Zap className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900">Inventory Logic</h3>
-              <p className="text-xs text-slate-400">Configure thresholds and automated behaviors.</p>
+              <h3 className="text-xl font-black tracking-tight">Advanced Automation</h3>
+              <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">Operational Efficiency</p>
             </div>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Low Stock Threshold</label>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={settingsMap["lowStockThreshold"] || "10"}
-                  onChange={(e) => handleChange("lowStockThreshold", e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">units</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">Products below this amount will appear in Alerts.</p>
+
+          <div className="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5">
+            <div>
+              <h4 className="text-sm font-black">Auto-validate Purchase Orders</h4>
+              <p className="text-xs text-white/40 mt-1">Automatically mark POs as RECEIVED upon creation (Demo mode only).</p>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Currency Symbol</label>
-              <select
-                value={settingsMap["currency"] || "$"}
-                onChange={(e) => handleChange("currency", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm appearance-none"
-              >
-                <option value="$">USD ($)</option>
-                <option value="€">EUR (€)</option>
-                <option value="£">GBP (£)</option>
-                <option value="¥">JPY (¥)</option>
-              </select>
+            <div className="w-12 h-6 bg-white/10 rounded-full relative cursor-not-allowed">
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white/20 rounded-full" />
             </div>
           </div>
         </section>
+      </div>
 
-        <div className="flex justify-end pt-4">
-          <button 
-            type="submit" 
-            disabled={saving}
-            className="flex items-center space-x-2 px-8 py-3 bg-black text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            <span>{saving ? "Saving..." : "Save Changes"}</span>
-          </button>
+      {isSaved && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-4 bg-emerald-500 text-white rounded-3xl shadow-2xl shadow-emerald-500/40 animate-bounce duration-700">
+          <CheckCircle2 className="w-5 h-5" />
+          <span className="text-xs font-black uppercase tracking-widest">Configuration Synchronized</span>
         </div>
-
-      </form>
+      )}
     </div>
   );
 }
