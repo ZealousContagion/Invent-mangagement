@@ -18,16 +18,9 @@ let StatsService = class StatsService {
         this.prisma = prisma;
     }
     async getDashboardStats() {
-        const [totalProducts, totalCategories, lowStockProducts, recentMovements, inventoryValue] = await Promise.all([
+        const [totalProducts, totalCategories, recentMovements, allProducts, thresholdSetting] = await Promise.all([
             this.prisma.product.count(),
             this.prisma.category.count(),
-            this.prisma.product.count({
-                where: {
-                    quantity: {
-                        lt: 10,
-                    },
-                },
-            }),
             this.prisma.stockMovement.count({
                 where: {
                     createdAt: {
@@ -35,24 +28,39 @@ let StatsService = class StatsService {
                     },
                 },
             }),
-            this.prisma.product.aggregate({
-                _sum: {
-                    price: true,
-                }
+            this.prisma.product.findMany({
+                select: { price: true, quantity: true }
+            }),
+            this.prisma.setting.findUnique({
+                where: { key: 'lowStockThreshold' }
             })
         ]);
-        const allProducts = await this.prisma.product.findMany({
-            select: { price: true, quantity: true }
-        });
+        const lowStockThreshold = thresholdSetting ? parseInt(thresholdSetting.value) : 10;
+        const lowStockProducts = allProducts.filter(p => p.quantity < lowStockThreshold).length;
         const totalValue = allProducts.reduce((acc, curr) => {
             return acc + (curr.price * curr.quantity);
         }, 0);
+        const categories = await this.prisma.category.findMany({
+            include: {
+                products: {
+                    select: {
+                        quantity: true,
+                        price: true,
+                    }
+                }
+            }
+        });
+        const categoryData = categories.map(cat => ({
+            name: cat.name,
+            value: cat.products.reduce((sum, p) => sum + (p.quantity * p.price), 0),
+        })).filter((cat) => cat.value > 0);
         return {
             totalProducts,
             totalCategories,
             lowStockProducts,
             recentMovements,
             totalValue,
+            categoryData,
         };
     }
 };

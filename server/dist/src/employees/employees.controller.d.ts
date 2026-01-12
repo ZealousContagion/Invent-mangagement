@@ -1,9 +1,10 @@
 import { EmployeesService } from './employees.service';
-import { Prisma } from '@prisma/client';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 export declare class EmployeesController {
     private readonly employeesService;
     constructor(employeesService: EmployeesService);
-    create(createEmployeeDto: Prisma.EmployeeCreateInput): Promise<{
+    create(createEmployeeDto: CreateEmployeeDto): Promise<{
         id: string;
         name: string;
         createdAt: Date;
@@ -23,21 +24,24 @@ export declare class EmployeesController {
         movements: ({
             product: {
                 id: string;
-                sku: string;
                 name: string;
                 description: string | null;
-                price: number;
-                quantity: number;
-                imageUrl: string | null;
                 createdAt: Date;
                 updatedAt: Date;
+                sku: string;
+                price: number;
+                quantity: number;
+                reorderPoint: number;
+                targetStockLevel: number;
+                imageUrl: string | null;
                 categoryId: string;
+                supplierId: string | null;
             };
         } & {
             id: string;
-            quantity: number;
             createdAt: Date;
-            type: import("@prisma/client").$Enums.MovementType;
+            quantity: number;
+            type: import(".prisma/client").$Enums.MovementType;
             reason: string | null;
             productId: string;
             employeeId: string | null;
@@ -50,7 +54,7 @@ export declare class EmployeesController {
         email: string;
         department: string;
     }) | null>;
-    update(id: string, updateEmployeeDto: Prisma.EmployeeUpdateInput): Promise<{
+    update(id: string, updateEmployeeDto: UpdateEmployeeDto): Promise<{
         id: string;
         name: string;
         createdAt: Date;

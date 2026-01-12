@@ -5,111 +5,66 @@ export declare class ProductsService {
     constructor(prisma: PrismaService);
     create(data: Prisma.ProductCreateInput): Promise<{
         id: string;
-        sku: string;
         name: string;
         description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
+        sku: string;
+        price: number;
+        quantity: number;
+        reorderPoint: number;
+        targetStockLevel: number;
+        imageUrl: string | null;
         categoryId: string;
+        supplierId: string | null;
     }>;
-    findAll(): Promise<({
-        category: {
-            name: string;
-        };
-    } & {
-        id: string;
-        sku: string;
-        name: string;
-        description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        categoryId: string;
-    })[]>;
-    findLowStock(): Promise<({
-        category: {
-            name: string;
-        };
-    } & {
-        id: string;
-        sku: string;
-        name: string;
-        description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        categoryId: string;
-    })[]>;
-    findOne(id: string): Promise<{
-        category: {
-            id: string;
-            name: string;
-            description: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-        };
-        movements: {
-            id: string;
-            quantity: number;
-            createdAt: Date;
-            type: import("@prisma/client").$Enums.MovementType;
-            reason: string | null;
-            productId: string;
-            employeeId: string | null;
-        }[];
-    } & {
-        id: string;
-        sku: string;
-        name: string;
-        description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        categoryId: string;
-    }>;
+    findAll(): Promise<any>;
+    findLowStock(): Promise<any>;
+    getReorderSuggestions(): Promise<any>;
+    findOne(id: string): Promise<any>;
     update(id: string, data: Prisma.ProductUpdateInput): Promise<{
         id: string;
-        sku: string;
         name: string;
         description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
+        sku: string;
+        price: number;
+        quantity: number;
+        reorderPoint: number;
+        targetStockLevel: number;
+        imageUrl: string | null;
         categoryId: string;
+        supplierId: string | null;
     }>;
     adjustStock(id: string, quantity: number, type: MovementType, reason?: string, employeeId?: string): Promise<{
         id: string;
-        sku: string;
         name: string;
         description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
+        sku: string;
+        price: number;
+        quantity: number;
+        reorderPoint: number;
+        targetStockLevel: number;
+        imageUrl: string | null;
         categoryId: string;
+        supplierId: string | null;
     }>;
     remove(id: string): Promise<{
         id: string;
-        sku: string;
         name: string;
         description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
+        sku: string;
+        price: number;
+        quantity: number;
+        reorderPoint: number;
+        targetStockLevel: number;
+        imageUrl: string | null;
         categoryId: string;
+        supplierId: string | null;
     }>;
 }

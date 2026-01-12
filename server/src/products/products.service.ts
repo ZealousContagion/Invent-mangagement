@@ -4,12 +4,14 @@ import { Prisma, MovementType } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
+
+  // Find all products with category and supplier info
 
   async create(data: Prisma.ProductCreateInput) {
     try {
       const product = await this.prisma.product.create({ data });
-      
+
       // Initial stock movement if quantity > 0
       if (product.quantity > 0) {
         await this.prisma.stockMovement.create({
@@ -21,7 +23,7 @@ export class ProductsService {
           },
         });
       }
-      
+
       return product;
     } catch (error) {
       if (error.code === 'P2002') {
@@ -32,35 +34,53 @@ export class ProductsService {
   }
 
   async findAll() {
-    return this.prisma.product.findMany({
+    return (this.prisma as any).product.findMany({
       include: {
         category: {
           select: { name: true },
         },
+        supplier: {
+          select: { name: true },
+        },
       },
+      orderBy: { name: 'asc' },
     });
   }
 
   async findLowStock() {
-    return this.prisma.product.findMany({
-      where: {
-        quantity: {
-          lt: 10,
-        },
-      },
+    const products = await (this.prisma as any).product.findMany({
       include: {
-        category: {
-          select: { name: true },
-        },
+        category: { select: { name: true } },
+        supplier: { select: { name: true } },
       },
     });
+    // Filter by individual reorderPoints
+    return products.filter(p => p.quantity < p.reorderPoint);
+  }
+
+  async getReorderSuggestions() {
+    // We fetch all products and filter in JS because Prisma doesn't support comparing two columns in the same row easily without raw SQL
+    const allProducts = await (this.prisma as any).product.findMany({
+      include: {
+        supplier: true,
+        category: true,
+      },
+    });
+
+    return allProducts
+      .filter(p => p.quantity < p.reorderPoint)
+      .map(p => ({
+        ...p,
+        suggestedOrderQuantity: Math.max(0, p.targetStockLevel - p.quantity),
+      }));
   }
 
   async findOne(id: string) {
-    const product = await this.prisma.product.findUnique({
+    const product = await (this.prisma as any).product.findUnique({
       where: { id },
       include: {
         category: true,
+        supplier: true,
         movements: {
           orderBy: { createdAt: 'desc' },
           take: 10,
@@ -89,11 +109,11 @@ export class ProductsService {
 
   async adjustStock(id: string, quantity: number, type: MovementType, reason?: string, employeeId?: string) {
     const product = await this.findOne(id);
-    
+
     // Logic for CHECK_IN/OUT is similar to IN/OUT but implies ownership transfer
     // CHECK_OUT = OUT (Quantity decreases from stock)
     // CHECK_IN = IN (Quantity increases to stock)
-    
+
     let effectiveType = type;
     let effectiveQuantityChange = 0;
 

@@ -1,41 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  RefreshCw, 
-  Download, 
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Plus,
+  Search,
+  Filter,
+  MoreVertical,
+  RefreshCw,
+  Download,
   Image as ImageIcon,
   X,
-  QrCode
+  QrCode,
+  Edit2,
+  Trash2
 } from "lucide-react";
 import StockAdjustmentModal from "@/components/StockAdjustmentModal";
 import QRCodeModal from "@/components/QRCodeModal";
 import { exportToCSV } from "@/lib/utils";
-
-interface Product {
-  id: string;
-  sku: string;
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl?: string;
-  category: { id: string; name: string };
-}
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/hooks/useProducts";
+import { useCategories } from "@/hooks/useCategories";
+import api from "@/lib/api";
 
 export default function InventoryPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isLoading: loading } = useProducts();
+  const { data: categories = [] } = useCategories();
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
+
   const [isAdding, setIsAdding] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedProductForQR, setSelectedProductForQR] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [selectedProductForQR, setSelectedProductForQR] = useState<any | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
@@ -45,74 +44,86 @@ export default function InventoryPage() {
     description: "",
     price: "",
     quantity: "",
-    categoryId: ""
+    categoryId: "",
+    supplierId: "",
+    reorderPoint: "10",
+    targetStockLevel: "50"
   });
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await axios.get("http://localhost:3001/products");
-      setProducts(response.data);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get("http://localhost:3001/categories");
-      setCategories(response.data);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    }
-  };
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: async () => {
+      const { data } = await api.get('/suppliers');
+      return data;
+    },
+  });
 
   const handleExport = () => {
     const dataToExport = filteredProducts.map(p => ({
       SKU: p.sku,
       Name: p.name,
-      Category: p.category.name,
+      Category: p.category?.name || "N/A",
       Price: p.price,
       Stock: p.quantity,
     }));
     exportToCSV(dataToExport, `inventory_export_${new Date().toISOString().split('T')[0]}`);
   };
 
-  const handleAddProduct = async (e: React.FormEvent) => {
+  const handleSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      let imageUrl = null;
+      let imageUrl = editingProduct?.imageUrl || null;
       if (selectedFile) {
         const formDataUpload = new FormData();
         formDataUpload.append("file", selectedFile);
-        const uploadRes = await axios.post("http://localhost:3001/uploads", formDataUpload);
+        const uploadRes = await api.post("/uploads", formDataUpload, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         imageUrl = uploadRes.data.url;
       }
-      await axios.post("http://localhost:3001/products", {
+
+      const productData = {
         ...formData,
         price: parseFloat(formData.price),
         quantity: parseInt(formData.quantity),
+        reorderPoint: parseInt(formData.reorderPoint),
+        targetStockLevel: parseInt(formData.targetStockLevel),
+        supplierId: formData.supplierId || null,
         imageUrl
+      };
+
+      if (editingProduct) {
+        await updateProduct.mutateAsync({ id: editingProduct.id, data: productData });
+      } else {
+        await createProduct.mutateAsync(productData);
+      }
+
+      setFormData({
+        sku: "", name: "", description: "", price: "", quantity: "",
+        categoryId: "", supplierId: "", reorderPoint: "10", targetStockLevel: "50"
       });
-      setFormData({ sku: "", name: "", description: "", price: "", quantity: "", categoryId: "" });
       setSelectedFile(null);
       setIsAdding(false);
-      fetchProducts();
+      setEditingProduct(null);
     } catch (error) {
-      console.error("Error adding product:", error);
+      console.error("Error saving product:", error);
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    try {
+      await deleteProduct.mutateAsync(id);
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("Error deleting product.");
     }
   };
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || product.category.id === selectedCategory;
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || product.categoryId === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -123,12 +134,12 @@ export default function InventoryPage() {
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Inventory</h2>
           <p className="text-sm text-slate-500 mt-1">Manage and track your products.</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsAdding(!isAdding)}
           className={`
             flex items-center space-x-2 px-5 py-2 rounded-lg font-medium transition-all text-sm
-            ${isAdding 
-              ? "bg-slate-100 text-slate-700 hover:bg-slate-200" 
+            ${isAdding
+              ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
               : "bg-black text-white hover:bg-slate-800 shadow-sm"
             }
           `}
@@ -138,10 +149,10 @@ export default function InventoryPage() {
         </button>
       </div>
 
-      {isAdding && (
+      {(isAdding || editingProduct) && (
         <div className="bg-white p-8 rounded-xl border border-slate-100 shadow-sm animate-in slide-in-from-top-4 duration-300">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">New Product</h3>
-          <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-6">{editingProduct ? 'Edit Product' : 'New Product'}</h3>
+          <form onSubmit={handleSubmitProduct} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {["sku", "name", "price", "quantity"].map((field) => (
               <div key={field} className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{field}</label>
@@ -169,6 +180,29 @@ export default function InventoryPage() {
               </select>
             </div>
             <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Supplier</label>
+              <select
+                value={formData.supplierId}
+                onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm appearance-none"
+              >
+                <option value="">Select supplier...</option>
+                {suppliers.map((sup: any) => <option key={sup.id} value={sup.id}>{sup.name}</option>)}
+              </select>
+            </div>
+            {["reorderPoint", "targetStockLevel"].map((field) => (
+              <div key={field} className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{field.replace(/([A-Z])/g, ' $1')}</label>
+                <input
+                  type="number"
+                  required
+                  value={(formData as any)[field]}
+                  onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm"
+                />
+              </div>
+            ))}
+            <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Image</label>
               <input
                 type="file"
@@ -177,9 +211,27 @@ export default function InventoryPage() {
                 className="w-full text-xs text-slate-50 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer border border-slate-200 rounded-lg bg-slate-50"
               />
             </div>
-            <div className="lg:col-span-3 flex justify-end pt-4">
-              <button type="submit" className="px-8 py-2.5 bg-black text-white rounded-lg font-bold text-sm hover:bg-slate-800 transition-all">
-                Save Product
+            <div className="lg:col-span-3 flex justify-end pt-4 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAdding(false);
+                  setEditingProduct(null);
+                  setFormData({
+                    sku: "", name: "", description: "", price: "", quantity: "",
+                    categoryId: "", supplierId: "", reorderPoint: "10", targetStockLevel: "50"
+                  });
+                }}
+                className="px-8 py-2.5 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm hover:bg-slate-200 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={createProduct.isPending || updateProduct.isPending}
+                className="px-8 py-2.5 bg-black text-white rounded-lg font-bold text-sm hover:bg-slate-800 transition-all disabled:opacity-50"
+              >
+                {editingProduct ? (updateProduct.isPending ? "Updating..." : "Update Product") : (createProduct.isPending ? "Save Product" : "Save Product")}
               </button>
             </div>
           </form>
@@ -241,19 +293,47 @@ export default function InventoryPage() {
                     <td className="px-6 py-4 text-xs font-mono text-slate-500">{product.sku}</td>
                     <td className="px-6 py-4">
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                        {product.category.name}
+                        {product.category?.name}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-slate-900">${product.price.toFixed(2)}</td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-sm font-bold ${product.quantity === 0 ? 'text-red-500' : product.quantity < 10 ? 'text-amber-500' : 'text-slate-900'}`}>{product.quantity}</span>
+                      <div className="flex flex-col">
+                        <span className={`text-sm font-bold ${product.quantity === 0 ? 'text-red-500' : product.quantity < product.reorderPoint ? 'text-amber-500' : 'text-slate-900'}`}>
+                          {product.quantity}
+                        </span>
+                        {product.quantity < product.reorderPoint && (
+                          <span className="text-[10px] text-amber-600 font-medium">Below reorder pt ({product.reorderPoint})</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => setSelectedProductForQR(product)} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg transition-colors"><QrCode className="w-4 h-4" /></button>
-                        <button onClick={() => setSelectedProduct(product)} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg transition-colors"><RefreshCw className="w-4 h-4" /></button>
+                        <button onClick={() => setSelectedProductForQR(product)} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg transition-colors" title="QR Code"><QrCode className="w-4 h-4" /></button>
+                        <button onClick={() => setSelectedProduct(product)} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg transition-colors" title="Adjust Stock"><RefreshCw className="w-4 h-4" /></button>
+                        <button
+                          onClick={() => {
+                            setEditingProduct(product);
+                            setFormData({
+                              sku: product.sku,
+                              name: product.name,
+                              description: product.description || "",
+                              price: product.price.toString(),
+                              quantity: product.quantity.toString(),
+                              categoryId: product.categoryId,
+                              supplierId: product.supplierId || "",
+                              reorderPoint: product.reorderPoint.toString(),
+                              targetStockLevel: product.targetStockLevel.toString()
+                            });
+                            setIsAdding(false);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="p-2 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeleteProduct(product.id)} className="p-2 text-slate-400 hover:text-red-600 rounded-lg transition-colors" title="Delete"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -264,7 +344,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {selectedProduct && <StockAdjustmentModal product={selectedProduct} axios={axios} onClose={() => setSelectedProduct(null)} onSuccess={fetchProducts} />}
+      {selectedProduct && <StockAdjustmentModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />}
       {selectedProductForQR && <QRCodeModal product={selectedProductForQR} onClose={() => setSelectedProductForQR(null)} />}
     </div>
   );

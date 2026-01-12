@@ -8,5 +8,6 @@ export declare class StatsService {
         lowStockProducts: number;
         recentMovements: number;
         totalValue: number;
+        categoryData: any;
     }>;
 }

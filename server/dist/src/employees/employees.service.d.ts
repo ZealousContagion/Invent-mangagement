@@ -23,21 +23,24 @@ export declare class EmployeesService {
         movements: ({
             product: {
                 id: string;
-                sku: string;
                 name: string;
                 description: string | null;
-                price: number;
-                quantity: number;
-                imageUrl: string | null;
                 createdAt: Date;
                 updatedAt: Date;
+                sku: string;
+                price: number;
+                quantity: number;
+                reorderPoint: number;
+                targetStockLevel: number;
+                imageUrl: string | null;
                 categoryId: string;
+                supplierId: string | null;
             };
         } & {
             id: string;
-            quantity: number;
             createdAt: Date;
-            type: import("@prisma/client").$Enums.MovementType;
+            quantity: number;
+            type: import(".prisma/client").$Enums.MovementType;
             reason: string | null;
             productId: string;
             employeeId: string | null;

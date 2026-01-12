@@ -1,44 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { format } from "date-fns";
 import { ArrowDownLeft, ArrowUpRight, RefreshCw, Download, Calendar, Package } from "lucide-react";
 import { exportToCSV } from "@/lib/utils";
-
-interface StockMovement {
-  id: string;
-  type: "IN" | "OUT" | "ADJUSTMENT" | "CHECK_IN" | "CHECK_OUT";
-  quantity: number;
-  reason: string;
-  createdAt: string;
-  product: {
-    name: string;
-    sku: string;
-  };
-  employee?: {
-    name: string;
-  };
-}
+import { useMovements } from "@/hooks/useMovements";
 
 export default function StockMovementsPage() {
-  const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchMovements();
-  }, []);
-
-  const fetchMovements = async () => {
-    try {
-      const response = await axios.get("http://localhost:3001/stock-movements");
-      setMovements(response.data);
-    } catch (error) {
-      console.error("Error fetching movements:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: movements = [], isLoading: loading } = useMovements();
 
   const handleExport = () => {
     const dataToExport = movements.map(m => ({

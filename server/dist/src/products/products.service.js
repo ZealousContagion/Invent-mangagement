@@ -46,28 +46,42 @@ let ProductsService = class ProductsService {
                 category: {
                     select: { name: true },
                 },
-            },
-        });
-    }
-    async findLowStock() {
-        return this.prisma.product.findMany({
-            where: {
-                quantity: {
-                    lt: 10,
-                },
-            },
-            include: {
-                category: {
+                supplier: {
                     select: { name: true },
                 },
             },
+            orderBy: { name: 'asc' },
         });
+    }
+    async findLowStock() {
+        const products = await this.prisma.product.findMany({
+            include: {
+                category: { select: { name: true } },
+                supplier: { select: { name: true } },
+            },
+        });
+        return products.filter(p => p.quantity < p.reorderPoint);
+    }
+    async getReorderSuggestions() {
+        const allProducts = await this.prisma.product.findMany({
+            include: {
+                supplier: true,
+                category: true,
+            },
+        });
+        return allProducts
+            .filter(p => p.quantity < p.reorderPoint)
+            .map(p => ({
+            ...p,
+            suggestedOrderQuantity: Math.max(0, p.targetStockLevel - p.quantity),
+        }));
     }
     async findOne(id) {
         const product = await this.prisma.product.findUnique({
             where: { id },
             include: {
                 category: true,
+                supplier: true,
                 movements: {
                     orderBy: { createdAt: 'desc' },
                     take: 10,

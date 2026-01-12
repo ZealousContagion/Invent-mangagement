@@ -2,25 +2,36 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Package, 
-  Tags, 
-  History, 
-  Settings,
+import {
+  LayoutDashboard,
+  Package,
+  Tags,
   Bell,
   Users,
   LogOut,
-  Package2
+  Package2,
+  ShoppingCart,
+  Receipt,
+  Handshake,
+  BarChart3,
+  TrendingUp,
+  History,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
   { icon: Package, label: "Inventory", href: "/inventory" },
+  { icon: ShoppingCart, label: "Purchase Orders", href: "/purchase-orders" },
+  { icon: Receipt, label: "Expenses", href: "/expenses" },
+  { icon: TrendingUp, label: "Sales Orders", href: "/sales-orders" },
+  { icon: Handshake, label: "Customers", href: "/customers" },
+  { icon: BarChart3, label: "Reports", href: "/reports" },
   { icon: Bell, label: "Alerts", href: "/alerts" },
   { icon: Tags, label: "Categories", href: "/categories" },
   { icon: Users, label: "Employees", href: "/employees" },
+  { icon: Package2, label: "Suppliers", href: "/suppliers" },
   { icon: History, label: "Stock Movements", href: "/movements" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
@@ -34,7 +45,7 @@ export default function Sidebar() {
       <div className="h-16 flex items-center px-6 border-b border-slate-50">
         <div className="flex items-center space-x-2.5">
           <div className="bg-black text-white p-1.5 rounded-lg">
-             <Package2 className="w-5 h-5" />
+            <Package2 className="w-5 h-5" />
           </div>
           <span className="text-lg font-bold tracking-tight text-slate-900">Inventory.</span>
         </div>
@@ -56,11 +67,11 @@ export default function Sidebar() {
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
               )}
             >
-              <item.icon 
+              <item.icon
                 className={cn(
-                  "w-[18px] h-[18px] transition-colors", 
+                  "w-[18px] h-[18px] transition-colors",
                   isActive ? "text-black" : "text-slate-400 group-hover:text-slate-600"
-                )} 
+                )}
                 strokeWidth={2}
               />
               <span className="text-sm">{item.label}</span>

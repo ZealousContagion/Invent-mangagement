@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
-import axios from "axios";
+import { useAdjustStock } from "@/hooks/useProducts";
+import { useEmployees } from "@/hooks/useEmployees";
 
 interface Product {
   id: string;
@@ -11,63 +12,40 @@ interface Product {
   quantity: number;
 }
 
-interface Employee {
-  id: string;
-  name: string;
-}
-
 interface StockAdjustmentModalProps {
   product: Product;
   onClose: () => void;
-  onSuccess: () => void;
-  axios: any;
 }
 
-export default function StockAdjustmentModal({ product, onClose, onSuccess, axios }: StockAdjustmentModalProps) {
+export default function StockAdjustmentModal({ product, onClose }: StockAdjustmentModalProps) {
   const [formData, setFormData] = useState({
     quantity: "",
     type: "IN",
     reason: "",
     employeeId: ""
   });
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // Fetch employees if needed
-    if (formData.type === "CHECK_IN" || formData.type === "CHECK_OUT") {
-      fetchEmployees();
-    }
-  }, [formData.type]);
-
-  const fetchEmployees = async () => {
-    try {
-      const res = await axios.get("http://localhost:3001/employees");
-      setEmployees(res.data);
-    } catch (error) {
-      console.error("Error fetching employees", error);
-    }
-  };
+  
+  const { data: employees = [] } = useEmployees();
+  const adjustStock = useAdjustStock();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      await axios.post(`http://localhost:3001/products/${product.id}/adjust`, {
+      await adjustStock.mutateAsync({
+        id: product.id,
         quantity: parseInt(formData.quantity),
         type: formData.type,
         reason: formData.reason,
         employeeId: formData.employeeId || undefined
       });
-      onSuccess();
       onClose();
     } catch (error) {
       console.error("Error adjusting stock:", error);
       alert("Failed to adjust stock.");
-    } finally {
-      setLoading(false);
     }
   };
+
+  const loading = adjustStock.isPending;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

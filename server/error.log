@@ -1,0 +1,13 @@
+[32m[Nest] 19532  - [39m12/01/2026, 12:44:30 [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[Nest] 19532  - 12/01/2026, 12:44:30   ERROR [ExceptionHandler] PrismaClientConstructorValidationError: Using engine type "client" requires either "adapter" or "accelerateUrl" to be provided to PrismaClient constructor.
+Read more at https://pris.ly/d/client-constructor
+    at validateDependentOptions (C:\Users\admin\OneDrive\Documents\Development\inventory\server\node_modules\@prisma\client\src\runtime\utils\validatePrismaClientOptions.ts:229:11)
+    at validatePrismaClientOptions (C:\Users\admin\OneDrive\Documents\Development\inventory\server\node_modules\@prisma\client\src\runtime\utils\validatePrismaClientOptions.ts:246:3)
+    at new t (C:\Users\admin\OneDrive\Documents\Development\inventory\server\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:281:7)
+    at new PrismaService (C:\Users\admin\OneDrive\Documents\Development\inventory\server\src\prisma\prisma.service.ts:7:5)
+    at Injector.instantiateClass (C:\Users\admin\OneDrive\Documents\Development\inventory\server\node_modules\@nestjs\core\injector\injector.js:422:19)
+    at callback (C:\Users\admin\OneDrive\Documents\Development\inventory\server\node_modules\@nestjs\core\injector\injector.js:70:45)
+    at async Injector.resolveConstructorParams (C:\Users\admin\OneDrive\Documents\Development\inventory\server\node_modules\@nestjs\core\injector\injector.js:170:24)
+    at async Injector.loadInstance (C:\Users\admin\OneDrive\Documents\Development\inventory\server\node_modules\@nestjs\core\injector\injector.js:75:13)
+    at async Injector.loadProvider (C:\Users\admin\OneDrive\Documents\Development\inventory\server\node_modules\@nestjs\core\injector\injector.js:103:9)
+    at async C:\Users\admin\OneDrive\Documents\Development\inventory\server\node_modules\@nestjs\core\injector\instance-loader.js:56:13

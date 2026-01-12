@@ -24,15 +24,18 @@ export declare class CategoriesService {
     findOne(id: string): Promise<{
         products: {
             id: string;
-            sku: string;
             name: string;
             description: string | null;
-            price: number;
-            quantity: number;
-            imageUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
+            sku: string;
+            price: number;
+            quantity: number;
+            reorderPoint: number;
+            targetStockLevel: number;
+            imageUrl: string | null;
             categoryId: string;
+            supplierId: string | null;
         }[];
     } & {
         id: string;

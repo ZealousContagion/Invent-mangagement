@@ -1,120 +1,72 @@
 import { ProductsService } from './products.service';
-import { Prisma, MovementType } from '@prisma/client';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { AdjustStockDto } from './dto/adjust-stock.dto';
 export declare class ProductsController {
     private readonly productsService;
     constructor(productsService: ProductsService);
-    create(data: any): Promise<{
+    create(createProductDto: CreateProductDto): Promise<{
         id: string;
-        sku: string;
         name: string;
         description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
+        sku: string;
+        price: number;
+        quantity: number;
+        reorderPoint: number;
+        targetStockLevel: number;
+        imageUrl: string | null;
         categoryId: string;
+        supplierId: string | null;
     }>;
-    findAll(): Promise<({
-        category: {
-            name: string;
-        };
-    } & {
+    findAll(): Promise<any>;
+    findLowStock(): Promise<any>;
+    getReorderSuggestions(): Promise<any>;
+    findOne(id: string): Promise<any>;
+    update(id: string, updateProductDto: UpdateProductDto): Promise<{
         id: string;
-        sku: string;
         name: string;
         description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string;
-    })[]>;
-    findLowStock(): Promise<({
-        category: {
-            name: string;
-        };
-    } & {
-        id: string;
         sku: string;
-        name: string;
-        description: string | null;
         price: number;
         quantity: number;
+        reorderPoint: number;
+        targetStockLevel: number;
         imageUrl: string | null;
-        createdAt: Date;
-        updatedAt: Date;
         categoryId: string;
-    })[]>;
-    findOne(id: string): Promise<{
-        category: {
-            id: string;
-            name: string;
-            description: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-        };
-        movements: {
-            id: string;
-            quantity: number;
-            createdAt: Date;
-            type: import("@prisma/client").$Enums.MovementType;
-            reason: string | null;
-            productId: string;
-            employeeId: string | null;
-        }[];
-    } & {
-        id: string;
-        sku: string;
-        name: string;
-        description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        categoryId: string;
+        supplierId: string | null;
     }>;
-    update(id: string, data: Prisma.ProductUpdateInput): Promise<{
+    adjustStock(id: string, adjustStockDto: AdjustStockDto): Promise<{
         id: string;
-        sku: string;
         name: string;
         description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string;
-    }>;
-    adjustStock(id: string, body: {
-        quantity: number;
-        type: MovementType;
-        reason?: string;
-        employeeId?: string;
-    }): Promise<{
-        id: string;
         sku: string;
-        name: string;
-        description: string | null;
         price: number;
         quantity: number;
+        reorderPoint: number;
+        targetStockLevel: number;
         imageUrl: string | null;
-        createdAt: Date;
-        updatedAt: Date;
         categoryId: string;
+        supplierId: string | null;
     }>;
     remove(id: string): Promise<{
         id: string;
-        sku: string;
         name: string;
         description: string | null;
-        price: number;
-        quantity: number;
-        imageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
+        sku: string;
+        price: number;
+        quantity: number;
+        reorderPoint: number;
+        targetStockLevel: number;
+        imageUrl: string | null;
         categoryId: string;
+        supplierId: string | null;
     }>;
 }

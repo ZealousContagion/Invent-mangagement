@@ -1,53 +1,44 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Save, Building, AlertTriangle } from "lucide-react";
+import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { data: rawSettings = [], isLoading: loading } = useSettings();
+  const updateSettings = useUpdateSettings();
+  
+  const [settingsMap, setSettingsMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const response = await axios.get("http://localhost:3001/settings");
-      const settingsMap: Record<string, string> = {};
-      response.data.forEach((s: any) => {
-        settingsMap[s.key] = s.value;
+    if (rawSettings.length > 0) {
+      const map: Record<string, string> = {};
+      rawSettings.forEach((s) => {
+        map[s.key] = s.value;
       });
-      setSettings(settingsMap);
-    } catch (error) {
-      console.error("Error fetching settings:", error);
-    } finally {
-      setLoading(false);
+      setSettingsMap(map);
     }
-  };
+  }, [rawSettings]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     try {
-      const settingsArray = Object.entries(settings).map(([key, value]) => ({ key, value }));
-      await axios.post("http://localhost:3001/settings", { settings: settingsArray });
+      const settingsArray = Object.entries(settingsMap).map(([key, value]) => ({ key, value }));
+      await updateSettings.mutateAsync(settingsArray);
       alert("Settings saved successfully.");
     } catch (error) {
       console.error("Error saving settings:", error);
       alert("Failed to save settings.");
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleChange = (key: string, value: string) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettingsMap(prev => ({ ...prev, [key]: value }));
   };
 
   if (loading) return <div className="p-8 text-center text-slate-400">Loading configuration...</div>;
+
+  const saving = updateSettings.isPending;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -74,7 +65,7 @@ export default function SettingsPage() {
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Company Name</label>
               <input
                 type="text"
-                value={settings["companyName"] || ""}
+                value={settingsMap["companyName"] || ""}
                 onChange={(e) => handleChange("companyName", e.target.value)}
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm"
                 placeholder="My Company Inc."
@@ -84,7 +75,7 @@ export default function SettingsPage() {
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Support Email</label>
               <input
                 type="email"
-                value={settings["supportEmail"] || ""}
+                value={settingsMap["supportEmail"] || ""}
                 onChange={(e) => handleChange("supportEmail", e.target.value)}
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm"
                 placeholder="support@example.com"
@@ -93,7 +84,7 @@ export default function SettingsPage() {
             <div className="col-span-full space-y-1.5">
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Address</label>
               <textarea
-                value={settings["address"] || ""}
+                value={settingsMap["address"] || ""}
                 onChange={(e) => handleChange("address", e.target.value)}
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm h-24 resize-none"
                 placeholder="123 Business St, Tech City..."
@@ -119,7 +110,7 @@ export default function SettingsPage() {
               <div className="relative">
                 <input
                   type="number"
-                  value={settings["lowStockThreshold"] || "10"}
+                  value={settingsMap["lowStockThreshold"] || "10"}
                   onChange={(e) => handleChange("lowStockThreshold", e.target.value)}
                   className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm"
                 />
@@ -130,7 +121,7 @@ export default function SettingsPage() {
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Currency Symbol</label>
               <select
-                value={settings["currency"] || "$"}
+                value={settingsMap["currency"] || "$"}
                 onChange={(e) => handleChange("currency", e.target.value)}
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 transition-all text-sm appearance-none"
               >

@@ -1,19 +1,21 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { Prisma, MovementType } from '@prisma/client';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { AdjustStockDto } from './dto/adjust-stock.dto';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
 
   @Post()
-  create(@Body() data: any) {
-    // In a real app, use a DTO for validation
-    const { categoryId, imageUrl, ...rest } = data;
+  create(@Body() createProductDto: CreateProductDto) {
+    const { categoryId, supplierId, imageUrl, ...rest } = createProductDto;
     return this.productsService.create({
       ...rest,
       imageUrl,
       category: { connect: { id: categoryId } },
+      ...(supplierId ? { supplier: { connect: { id: supplierId } } } : {}),
     });
   }
 
@@ -27,22 +29,33 @@ export class ProductsController {
     return this.productsService.findLowStock();
   }
 
+  @Get('reorder-suggestions')
+  getReorderSuggestions() {
+    return this.productsService.getReorderSuggestions();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() data: Prisma.ProductUpdateInput) {
-    return this.productsService.update(id, data);
+  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
+    const { categoryId, supplierId, ...rest } = updateProductDto;
+    return this.productsService.update(id, {
+      ...rest,
+      ...(categoryId ? { category: { connect: { id: categoryId } } } : {}),
+      ...(supplierId ? { supplier: { connect: { id: supplierId } } } : { supplier: { disconnect: true } }),
+    });
   }
 
   @Post(':id/adjust')
   adjustStock(
     @Param('id') id: string,
-    @Body() body: { quantity: number; type: MovementType; reason?: string; employeeId?: string },
+    @Body() adjustStockDto: AdjustStockDto,
   ) {
-    return this.productsService.adjustStock(id, body.quantity, body.type, body.reason, body.employeeId);
+    const { quantity, type, reason, employeeId } = adjustStockDto;
+    return this.productsService.adjustStock(id, quantity, type, reason, employeeId);
   }
 
   @Delete(':id')

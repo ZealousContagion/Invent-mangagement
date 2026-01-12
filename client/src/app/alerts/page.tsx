@@ -1,38 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState } from "react";
 import { AlertTriangle, RefreshCw, CheckCircle2 } from "lucide-react";
 import StockAdjustmentModal from "@/components/StockAdjustmentModal";
-
-interface Product {
-  id: string;
-  sku: string;
-  name: string;
-  price: number;
-  quantity: number;
-  category: { name: string };
-}
+import { useLowStockProducts } from "@/hooks/useProducts";
 
 export default function AlertsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-  useEffect(() => {
-    fetchLowStock();
-  }, []);
-
-  const fetchLowStock = async () => {
-    try {
-      const response = await axios.get("http://localhost:3001/products/low-stock");
-      setProducts(response.data);
-    } catch (error) {
-      console.error("Error fetching alerts:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: products = [], isLoading: loading } = useLowStockProducts();
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -81,7 +56,7 @@ export default function AlertsPage() {
                     <td className="px-6 py-4 text-slate-600 font-mono text-sm">{product.sku}</td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                        {product.category.name}
+                        {product.category?.name}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -109,9 +84,7 @@ export default function AlertsPage() {
       {selectedProduct && (
         <StockAdjustmentModal
           product={selectedProduct}
-          axios={axios}
           onClose={() => setSelectedProduct(null)}
-          onSuccess={fetchLowStock}
         />
       )}
     </div>

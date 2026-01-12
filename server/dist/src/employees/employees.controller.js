@@ -15,7 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EmployeesController = void 0;
 const common_1 = require("@nestjs/common");
 const employees_service_1 = require("./employees.service");
-const client_1 = require("@prisma/client");
+const create_employee_dto_1 = require("./dto/create-employee.dto");
+const update_employee_dto_1 = require("./dto/update-employee.dto");
 let EmployeesController = class EmployeesController {
     employeesService;
     constructor(employeesService) {
@@ -42,7 +43,7 @@ __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [create_employee_dto_1.CreateEmployeeDto]),
     __metadata("design:returntype", void 0)
 ], EmployeesController.prototype, "create", null);
 __decorate([
@@ -63,7 +64,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, update_employee_dto_1.UpdateEmployeeDto]),
     __metadata("design:returntype", void 0)
 ], EmployeesController.prototype, "update", null);
 __decorate([

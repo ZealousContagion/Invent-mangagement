@@ -20,6 +20,10 @@ const stats_module_1 = require("./stats/stats.module");
 const uploads_controller_1 = require("./uploads/uploads.controller");
 const employees_module_1 = require("./employees/employees.module");
 const settings_module_1 = require("./settings/settings.module");
+const suppliers_module_1 = require("./suppliers/suppliers.module");
+const expenses_module_1 = require("./expenses.module");
+const sales_orders_module_1 = require("./sales-orders.module");
+const customers_module_1 = require("./customers.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -37,6 +41,10 @@ exports.AppModule = AppModule = __decorate([
             stats_module_1.StatsModule,
             employees_module_1.EmployeesModule,
             settings_module_1.SettingsModule,
+            suppliers_module_1.SuppliersModule,
+            expenses_module_1.ExpensesModule,
+            sales_orders_module_1.SalesOrdersModule,
+            customers_module_1.CustomersModule,
         ],
         controllers: [app_controller_1.AppController, uploads_controller_1.UploadsController],
         providers: [app_service_1.AppService],
