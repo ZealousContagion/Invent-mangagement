@@ -40,8 +40,8 @@ export default function ReportsPage() {
         );
     }
 
-    const totalRevenue = stats?.monthlyData.reduce((sum, d) => sum + d.revenue, 0) || 0;
-    const totalExpenses = stats?.monthlyData.reduce((sum, d) => sum + d.expenses, 0) || 0;
+    const totalRevenue = stats?.monthlyData?.reduce((sum, d) => sum + d.revenue, 0) || 0;
+    const totalExpenses = stats?.monthlyData?.reduce((sum, d) => sum + d.expenses, 0) || 0;
     const netProfit = totalRevenue - totalExpenses;
 
     return (
@@ -157,7 +157,7 @@ export default function ReportsPage() {
                 <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm flex flex-col">
                     <h3 className="text-xl font-black text-slate-900 tracking-tight mb-8">Top Products</h3>
                     <div className="space-y-6 flex-1">
-                        {stats?.topProducts.map((product, idx) => (
+                        {(stats?.topProducts || []).map((product, idx) => (
                             <div key={idx} className="flex items-center justify-between group">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center font-black text-slate-900 group-hover:bg-slate-900 group-hover:text-white transition-all">
@@ -171,7 +171,7 @@ export default function ReportsPage() {
                                 <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-slate-900 rounded-full"
-                                        style={{ width: `${(product.quantity / (stats.topProducts[0]?.quantity || 1)) * 100}%` }}
+                                        style={{ width: `${(product.quantity / (stats?.topProducts?.[0]?.quantity || 1)) * 100}%` }}
                                     />
                                 </div>
                             </div>
@@ -195,7 +195,7 @@ export default function ReportsPage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={stats?.categoryData}
+                                    data={stats?.categoryData || []}
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={60}
@@ -203,8 +203,8 @@ export default function ReportsPage() {
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    {stats?.categoryData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={8} />
+                                    {(stats?.categoryData || []).map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip />

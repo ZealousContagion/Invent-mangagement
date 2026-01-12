@@ -73,8 +73,8 @@ export default function Dashboard() {
   }
 
   const recentSales = salesOrders.slice(0, 5);
-  const totalRevenue = stats?.monthlyData.reduce((sum, d) => sum + d.revenue, 0) || 0;
-  const totalExpenses = stats?.monthlyData.reduce((sum, d) => sum + d.expenses, 0) || 0;
+  const totalRevenue = stats?.monthlyData?.reduce((sum, d) => sum + d.revenue, 0) || 0;
+  const totalExpenses = stats?.monthlyData?.reduce((sum, d) => sum + d.expenses, 0) || 0;
 
   return (
     <div className="space-y-10 max-w-7xl mx-auto pb-20">
@@ -136,7 +136,7 @@ export default function Dashboard() {
           </div>
           <div className="flex-1 h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats?.monthlyData}>
+              <AreaChart data={stats?.monthlyData || []}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#0f172a" stopOpacity={0.1} />
@@ -227,7 +227,7 @@ export default function Dashboard() {
                   <div className="flex-1 min-w-0">
                     <h4 className="text-base font-black text-slate-900 truncate">{p.name}</h4>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
-                      Current: <span className="text-red-500">{p.quantity}</span> • Ideal: {p.suggestedOrderQuantity + p.quantity}
+                      Current: <span className="text-red-500">{p.quantity}</span> • Ideal: {(p.suggestedOrderQuantity || 0) + p.quantity}
                     </p>
                   </div>
                   <button
@@ -248,7 +248,7 @@ export default function Dashboard() {
           <h3 className="text-xl font-black text-slate-900 tracking-tight mb-8">Asset Liquidity by Category</h3>
           <div className="flex-1 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.categoryData || []} layout="vertical">
+              <BarChart data={stats?.categoryData || []} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                 <XAxis type="number" hide />
                 <YAxis
@@ -265,7 +265,7 @@ export default function Dashboard() {
                   formatter={(value: any) => [`$${value.toLocaleString()}`, 'Total Value']}
                 />
                 <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={40}>
-                  {(stats.categoryData || []).map((entry: any, index: number) => (
+                  {(stats?.categoryData || []).map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Bar>

@@ -1,10 +1,23 @@
 "use client";
 
-import { Search, Bell, Settings } from "lucide-react";
+import { Search, Bell, Settings, Menu } from "lucide-react";
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   return (
-    <header className="bg-white/50 backdrop-blur-xl sticky top-0 z-40 border-b border-slate-100 px-8 h-16 flex items-center justify-between">
+    <header className="bg-white/50 backdrop-blur-xl sticky top-0 z-40 border-b border-slate-100 px-4 md:px-8 h-16 flex items-center justify-between">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={onMenuClick}
+        className="md:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all mr-2"
+        aria-label="Open menu"
+      >
+        <Menu className="w-5 h-5" strokeWidth={2} />
+      </button>
+
       {/* Search Bar - Minimalist */}
       <div className="flex items-center flex-1 max-w-sm">
         <div className="relative w-full group">
