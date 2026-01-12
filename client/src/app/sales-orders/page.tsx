@@ -14,12 +14,16 @@ import {
     FileText,
     AlertCircle,
     ArrowLeft,
-    TrendingUp
+    TrendingUp,
+    Download,
+    FileDown
 } from "lucide-react";
 import { useSalesOrders, useCreateSalesOrder, useUpdateSalesOrder, useDeleteSalesOrder } from "@/hooks/useSalesOrders";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useProducts } from "@/hooks/useProducts";
 import { format } from "date-fns";
+import { generateInvoicePDF } from "@/lib/pdfUtils";
+import { exportToCSV } from "@/lib/utils";
 
 export default function SalesOrdersPage() {
     const [selectedSO, setSelectedSO] = useState<any>(null);
@@ -123,6 +127,38 @@ export default function SalesOrdersPage() {
         so.customer.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const handleExportCSV = () => {
+        const exportData = sos.map(so => ({
+            OrderNumber: so.orderNumber,
+            Customer: so.customer.name,
+            Date: format(new Date(so.date), 'yyyy-MM-dd'),
+            Status: so.status,
+            Total: so.totalAmount
+        }));
+        exportToCSV(exportData, `sales_orders_${format(new Date(), 'yyyyMMdd')}`);
+    };
+
+    const handleGenerateInvoice = (so: any) => {
+        generateInvoicePDF({
+            orderNumber: so.orderNumber,
+            date: so.date,
+            customer: {
+                name: so.customer.name,
+                email: so.customer.email,
+                phone: so.customer.phone,
+                address: so.customer.address
+            },
+            items: so.items.map((i: any) => ({
+                name: i.product.name,
+                sku: i.product.sku,
+                quantity: i.quantity,
+                unitPrice: i.unitPrice,
+                total: i.quantity * i.unitPrice
+            })),
+            totalAmount: so.totalAmount
+        });
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'DRAFT': return 'bg-slate-100 text-slate-600';
@@ -150,15 +186,24 @@ export default function SalesOrdersPage() {
                     </button>
                 </div>
 
-                <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search orders..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-11 pr-4 py-4 bg-white border border-slate-100 rounded-[20px] text-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 transition-all font-medium shadow-sm"
-                    />
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search orders..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-11 pr-4 py-4 bg-white border border-slate-100 rounded-[20px] text-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 transition-all font-medium shadow-sm"
+                        />
+                    </div>
+                    <button
+                        onClick={handleExportCSV}
+                        className="p-4 bg-white border border-slate-100 text-slate-400 hover:text-slate-900 rounded-[20px] shadow-sm transition-all"
+                        title="Export CSV"
+                    >
+                        <Download className="w-5 h-5" />
+                    </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
@@ -174,8 +219,8 @@ export default function SalesOrdersPage() {
                                 key={so.id}
                                 onClick={() => setSelectedSO(so)}
                                 className={`p-6 rounded-[24px] cursor-pointer transition-all border ${selectedSO?.id === so.id
-                                        ? "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-900/10 translate-x-1"
-                                        : "bg-white border-slate-100 hover:border-slate-300 text-slate-900"
+                                    ? "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-900/10 translate-x-1"
+                                    : "bg-white border-slate-100 hover:border-slate-300 text-slate-900"
                                     }`}
                             >
                                 <div className="flex justify-between items-start mb-3">
@@ -220,6 +265,14 @@ export default function SalesOrdersPage() {
                             </div>
 
                             <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => handleGenerateInvoice(selectedSO)}
+                                    className="p-2.5 bg-white border border-slate-100 text-slate-400 hover:text-slate-900 rounded-xl transition-all flex items-center gap-2 pr-4"
+                                    title="Generate PDF Invoice"
+                                >
+                                    <FileDown className="w-5 h-5" />
+                                    <span className="text-xs font-bold">PDF Invoice</span>
+                                </button>
                                 {selectedSO.status === 'DRAFT' && (
                                     <>
                                         <button

@@ -11,9 +11,12 @@ import {
     Edit2,
     X,
     User,
-    ArrowUpRight
+    ArrowUpRight,
+    Download
 } from "lucide-react";
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from "@/hooks/useCustomers";
+import { exportToCSV } from "@/lib/utils";
+import { format } from "date-fns";
 
 export default function CustomersPage() {
     const { data: customers = [], isLoading } = useCustomers();
@@ -65,6 +68,16 @@ export default function CustomersPage() {
         setFormData({ name: "", email: "", phone: "", address: "" });
     };
 
+    const handleExport = () => {
+        const exportData = customers.map(c => ({
+            Name: c.name,
+            Email: c.email,
+            Phone: c.phone || "N/A",
+            Address: c.address || "N/A"
+        }));
+        exportToCSV(exportData, `customers_export_${format(new Date(), 'yyyyMMdd')}`);
+    };
+
     const filteredCustomers = customers.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -99,8 +112,17 @@ export default function CustomersPage() {
                         className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border-none rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-100 transition-all font-medium"
                     />
                 </div>
-                <div className="px-4 py-2 bg-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    {filteredCustomers.length} Total Customers
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleExport}
+                        className="p-3 bg-white border border-slate-100 text-slate-400 hover:text-slate-900 rounded-2xl shadow-sm transition-all"
+                        title="Export Customers"
+                    >
+                        <Download className="w-5 h-5" />
+                    </button>
+                    <div className="px-4 py-2 bg-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        {filteredCustomers.length} Total Customers
+                    </div>
                 </div>
             </div>
 

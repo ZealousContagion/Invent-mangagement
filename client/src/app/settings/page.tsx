@@ -9,19 +9,23 @@ import {
   Globe,
   Zap,
   RefreshCcw,
-  CheckCircle2
+  CheckCircle2,
+  Image as ImageIcon,
+  Plus
 } from "lucide-react";
 import { useSettings, useUpdateManySettings } from "@/hooks/useSettings";
+import api from "@/lib/api";
 
 export default function SettingsPage() {
   const { data: remoteSettings, isLoading } = useSettings();
   const updateSettings = useUpdateManySettings();
   const [localSettings, setLocalSettings] = useState<Record<string, string>>({});
   const [isSaved, setIsSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (remoteSettings) {
-      const mapped = remoteSettings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {});
+      const mapped = remoteSettings.reduce((acc, s: any) => ({ ...acc, [s.key]: s.value }), {});
       setLocalSettings(mapped);
     }
   }, [remoteSettings]);
@@ -34,6 +38,25 @@ export default function SettingsPage() {
       setTimeout(() => setIsSaved(false), 2000);
     } catch (error) {
       console.error("Failed to save settings:", error);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const { data } = await api.post("/uploads", formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setLocalSettings(prev => ({ ...prev, companyLogo: data.url }));
+    } catch (error) {
+      console.error("Logo upload failed:", error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -63,6 +86,53 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-8">
+        {/* Branding Section */}
+        <section className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-indigo-50 rounded-2xl">
+              <Zap className="w-6 h-6 text-indigo-500" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Brand Identity</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Logo & Presentation</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-10 items-start">
+            <div className="relative group">
+              <div className="w-32 h-32 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden transition-all group-hover:border-slate-300">
+                {localSettings.companyLogo ? (
+                  <img src={localSettings.companyLogo} alt="Logo Preview" className="w-full h-full object-contain p-4" />
+                ) : (
+                  <>
+                    <ImageIcon className="w-8 h-8 text-slate-300 mb-2" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase">No Logo</span>
+                  </>
+                )}
+                <label className="absolute inset-0 cursor-pointer opacity-0 group-hover:opacity-100 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center transition-all">
+                  <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                  <div className="text-white text-[10px] font-black uppercase flex items-center gap-2">
+                    <Plus className="w-3 h-3" /> {uploading ? "..." : "Change"}
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Company Name</label>
+                <input
+                  type="text"
+                  value={localSettings.companyName || "Inventory Pro"}
+                  onChange={(e) => setLocalSettings(prev => ({ ...prev, companyName: e.target.value }))}
+                  className="w-full px-6 py-4 bg-slate-50/50 border-none rounded-2xl text-lg font-black focus:outline-none focus:ring-4 focus:ring-slate-900/5 transition-all"
+                  placeholder="Your Company Co."
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Inventory Section */}
         <section className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
           <div className="flex items-center gap-4 mb-8">

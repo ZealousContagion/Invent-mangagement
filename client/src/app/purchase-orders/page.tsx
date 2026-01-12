@@ -15,13 +15,17 @@ import {
     Truck,
     ArrowLeft,
     Trash2,
-    Edit2
+    Edit2,
+    Download,
+    FileDown
 } from "lucide-react";
 import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useDeletePurchaseOrder } from "@/hooks/usePurchaseOrders";
 import { useProducts } from "@/hooks/useProducts";
 import { format } from "date-fns";
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { exportToCSV } from "@/lib/utils";
+import { generatePurchaseOrderPDF } from "@/lib/pdfUtils";
 
 // Local hook for suppliers since I didn't make a shared one yet
 const useSuppliersLocal = () => {
@@ -148,6 +152,39 @@ export default function PurchaseOrdersPage() {
         }
     };
 
+    const handleExportCSV = () => {
+        const exportData = pos.map(po => ({
+            OrderNumber: po.orderNumber,
+            Supplier: po.supplier.name,
+            Date: format(new Date(po.createdAt), 'yyyy-MM-dd'),
+            Status: po.status,
+            Total: po.totalAmount
+        }));
+        exportToCSV(exportData, `purchase_orders_${format(new Date(), 'yyyyMMdd')}`);
+    };
+
+    const handleGeneratePDF = (po: any) => {
+        generatePurchaseOrderPDF({
+            orderNumber: po.orderNumber,
+            date: po.createdAt,
+            expectedDate: po.expectedDate,
+            supplier: {
+                name: po.supplier.name,
+                email: po.supplier.email,
+                phone: po.supplier.phone,
+                address: po.supplier.address
+            },
+            items: po.items.map((i: any) => ({
+                name: i.product.name,
+                sku: i.product.sku,
+                quantity: i.quantity,
+                unitPrice: i.unitPrice,
+                total: i.quantity * i.unitPrice
+            })),
+            totalAmount: po.totalAmount
+        });
+    };
+
     const filteredPOs = pos.filter(po =>
         po.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         po.supplier.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -177,6 +214,14 @@ export default function PurchaseOrdersPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => handleGeneratePDF(selectedPO)}
+                            className="p-2.5 bg-white border border-slate-100 text-slate-400 hover:text-slate-900 rounded-xl transition-all flex items-center gap-2 pr-4 shadow-sm"
+                            title="Generate PO PDF"
+                        >
+                            <FileDown className="w-5 h-5" />
+                            <span className="text-xs font-bold uppercase tracking-widest">Generate PO</span>
+                        </button>
                         {selectedPO.status === 'DRAFT' && (
                             <>
                                 <button
@@ -309,6 +354,13 @@ export default function PurchaseOrdersPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleExportCSV}
+                        className="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-slate-900 rounded-xl transition-all"
+                        title="Export CSV"
+                    >
+                        <Download className="w-5 h-5" />
+                    </button>
                     <div className="relative group">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
                         <input

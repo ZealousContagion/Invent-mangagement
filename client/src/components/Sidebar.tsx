@@ -19,6 +19,7 @@ import {
   Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/hooks/useSettings";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
@@ -38,16 +39,28 @@ const menuItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: settings = [] } = useSettings();
+
+  const companyName = settings.find(s => s.key === 'companyName')?.value || "Inventory.";
+  const companyLogo = settings.find(s => s.key === 'companyLogo')?.value;
 
   return (
     <aside className="w-64 bg-white border-r border-slate-100 flex flex-col h-full z-50">
       {/* Brand Logo - Minimalist */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-50">
-        <div className="flex items-center space-x-2.5">
-          <div className="bg-black text-white p-1.5 rounded-lg">
-            <Package2 className="w-5 h-5" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-slate-900">Inventory.</span>
+      <div className="h-20 flex items-center px-6 border-b border-slate-50">
+        <div className="flex items-center space-x-3">
+          {companyLogo ? (
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center p-1 border border-slate-100">
+              <img src={companyLogo} alt="Logo" className="w-full h-full object-contain" />
+            </div>
+          ) : (
+            <div className="bg-black text-white p-2 rounded-xl">
+              <Package2 className="w-5 h-5" />
+            </div>
+          )}
+          <span className="text-lg font-black tracking-tight text-slate-900 truncate">
+            {companyName}
+          </span>
         </div>
       </div>
 
